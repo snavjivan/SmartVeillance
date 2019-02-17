@@ -1,8 +1,10 @@
 import React from 'react'
 import PubNubReact from 'pubnub-react';
+import Webcam from "react-webcam";
 
 import * as tf from '@tensorflow/tfjs'
 import './styles.css'
+import defaultImage from "./default.jpg";
 
 const LABELS_URL = process.env.PUBLIC_URL + '/model_web/labels.json'
 const MODEL_URL = process.env.PUBLIC_URL + '/model_web/tensorflowjs_model.pb'
@@ -135,7 +137,7 @@ class VideoStream extends React.Component {
 
   componentDidMount() {
     this.pubnub.subscribe({
-      channels: ['channel1'],
+      channels: ['channel1', 'channel2'],
       withPresence: true
     });
     this.pubnub.getStatus((st) => {
@@ -143,8 +145,14 @@ class VideoStream extends React.Component {
         message: 'NO GUN',
         channel: 'channel1'
       });
-      this.setState({text: 'NO GUN'})
+      this.pubnub.publish({
+        message: defaultImage,
+        channel: 'channel2'
+      });
     });
+    this.setState({text: 'NO GUN'})
+
+    this.setState({image: defaultImage})
 
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       const webCamPromise = navigator.mediaDevices
@@ -178,9 +186,25 @@ class VideoStream extends React.Component {
 
   componentWillUnmount() {
     this.pubnub.unsubscribe({
-      channels: ['channel1']
+      channels: ['channel1', 'channel2']
     });
   }
+
+  setRef = webcam => {
+    this.webcam = webcam;
+  };
+
+  capture = () => {
+    const imageSrc = this.webcam.getScreenshot();
+    this.pubnub.clean('channel2');
+    this.pubnub.publish({
+      message: imageSrc,
+      channel: 'channel2'
+    });
+    this.pubnub.getMessage('channel2', (msg) => {
+      this.setState({image: msg.message})
+    });
+  };
 
   detectFrame = (video, model, labels) => {
     TFWrapper(model)
@@ -228,6 +252,7 @@ class VideoStream extends React.Component {
         this.pubnub.getMessage('channel1', (msg) => {
           this.setState({text: msg.message})
         });
+        this.capture();
       }
       const label = labels[parseInt(prediction.class)]
       // Draw the bounding box.
@@ -252,11 +277,17 @@ class VideoStream extends React.Component {
   }
 
   render() {
+    const videoConstraints = {
+      width: 1280,
+      height: 720,
+      facingMode: "user"
+    };
     return (
       <div>
         <ul>
           {this.state.text}
         </ul>
+        <img className="screenshot" width="600" alt="" src={this.state.image}/>
         <video
           className="size"
           autoPlay
@@ -271,6 +302,16 @@ class VideoStream extends React.Component {
           ref={this.canvasRef}
           width="600"
           height="500"
+        />
+        <Webcam
+          audio={false}
+          height={0}
+          ref={this.setRef}
+          screenshotFormat="image/jpeg"
+          width={0}
+          videoConstraints={videoConstraints}
+          minScreenshotWidth={200}
+          minScreenshotHeight={167}
         />
       </div>
     )
