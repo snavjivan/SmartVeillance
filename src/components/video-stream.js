@@ -203,11 +203,9 @@ class VideoStream extends React.Component {
       if (this.gunDetected) {
         this.gunDetected = false
         console.log("NO GUN")
-        this.pubnub.getStatus((st) => {
-          this.pubnub.publish({
-            message: 'NO GUN',
-            channel: 'channel1'
-          });
+        this.pubnub.publish({
+          message: 'NO GUN',
+          channel: 'channel1'
         });
       }
     }
@@ -219,11 +217,9 @@ class VideoStream extends React.Component {
       if (!this.gunDetected) {
         this.gunDetected = true
         console.log("GUN DETECTED")
-        this.pubnub.getStatus((st) => {
-          this.pubnub.publish({
-            message: 'GUN DETECTED',
-            channel: 'channel1'
-          });
+        this.pubnub.publish({
+          message: 'GUN DETECTED',
+          channel: 'channel1'
         });
       }
       const label = labels[parseInt(prediction.class)]
