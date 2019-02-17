@@ -2,6 +2,9 @@ import React from 'react'
 import PubNubReact from 'pubnub-react';
 import Webcam from "react-webcam";
 
+import camera1 from "./camera1.wav";
+import camera2 from "./camera2.wav";
+
 import * as tf from '@tensorflow/tfjs'
 import './styles.css'
 import defaultImage from "./default.jpg";
@@ -206,6 +209,10 @@ class VideoStream extends React.Component {
     });
   };
 
+  alert = () => {
+    this.sound.play();
+  }
+
   detectFrame = (video, model, labels) => {
     TFWrapper(model)
       .detect(video)
@@ -244,6 +251,7 @@ class VideoStream extends React.Component {
       const height = prediction.bbox[3]
       if (!this.gunDetected) {
         this.gunDetected = true
+        this.alert();
         this.pubnub.clean('channel1');
         this.pubnub.publish({
           message: 'GUN ON CAMERA 1',
@@ -313,6 +321,10 @@ class VideoStream extends React.Component {
           minScreenshotWidth={200}
           minScreenshotHeight={167}
         />
+        <audio ref={(sound) => { this.sound = sound;}}>
+  			   <source src={camera1} type="audio/mpeg" >
+  			   </source>
+  		  </audio>
       </div>
     )
   }
