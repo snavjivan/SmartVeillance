@@ -8,6 +8,7 @@ import camera2 from "./camera2.wav";
 import * as tf from '@tensorflow/tfjs'
 import './styles.css'
 import defaultImage from "./default.jpg";
+import logo from "./logo.png";
 
 const LABELS_URL = process.env.PUBLIC_URL + '/model_web/labels.json'
 const MODEL_URL = process.env.PUBLIC_URL + '/model_web/tensorflowjs_model.pb'
@@ -145,7 +146,7 @@ class VideoStream extends React.Component {
     });
     this.pubnub.getStatus((st) => {
       this.pubnub.publish({
-        message: 'NO GUN',
+        message: 'NO GUN DETECTED',
         channel: 'channel1'
       });
       this.pubnub.publish({
@@ -153,9 +154,11 @@ class VideoStream extends React.Component {
         channel: 'channel2'
       });
     });
-    this.setState({text: 'NO GUN'})
+    this.setState({text: 'NO GUN DETECTED'})
 
     this.setState({image: defaultImage})
+
+    this.setState({color: 'white'})
 
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       const webCamPromise = navigator.mediaDevices
@@ -236,9 +239,10 @@ class VideoStream extends React.Component {
         this.gunDetected = false
         this.pubnub.clean('channel1');
         this.pubnub.publish({
-          message: 'NO GUN',
+          message: 'NO GUN DETECTED',
           channel: 'channel1'
         });
+        this.setState({color: 'white'})
         this.pubnub.getMessage('channel1', (msg) => {
           this.setState({text: msg.message})
         });
@@ -257,6 +261,7 @@ class VideoStream extends React.Component {
           message: 'GUN ON CAMERA 1',
           channel: 'channel1'
         });
+        this.setState({color: 'red'})
         this.pubnub.getMessage('channel1', (msg) => {
           this.setState({text: msg.message})
         });
@@ -292,7 +297,10 @@ class VideoStream extends React.Component {
     };
     return (
       <div>
-        <ul>
+        <div className="header">
+          <img height="50" src={logo}/> SmartVeillance
+        </div>
+        <ul style={{background: this.state.color}} className="text">
           {this.state.text}
         </ul>
         <img className="screenshot" width="600" alt="" src={this.state.image}/>

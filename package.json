@@ -12,8 +12,10 @@
     "pubnub-react": "^1.2.0",
     "react": "16.5.2",
     "react-dom": "16.5.2",
+    "react-helmet": "^5.2.0",
     "react-magic-dropzone": "1.0.1",
     "react-scripts": "2.0.3",
+    "react-sound": "^1.2.0",
     "react-webcam": "^1.1.0"
   },
   "devDependencies": {},
