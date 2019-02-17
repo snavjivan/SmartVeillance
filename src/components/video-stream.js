@@ -121,6 +121,7 @@ const TFWrapper = model => {
 class VideoStream extends React.Component {
   videoRef = React.createRef()
   canvasRef = React.createRef()
+  gunDetected = false
 
   componentDidMount() {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -171,11 +172,21 @@ class VideoStream extends React.Component {
     const font = '16px sans-serif'
     ctx.font = font
     ctx.textBaseline = 'top'
+    if(predictions.length === 0) {
+      if (this.gunDetected) {
+        this.gunDetected = false
+        console.log("NO GUN")
+      }
+    }
     predictions.forEach(prediction => {
       const x = prediction.bbox[0]
       const y = prediction.bbox[1]
       const width = prediction.bbox[2]
       const height = prediction.bbox[3]
+      if (!this.gunDetected) {
+        this.gunDetected = true
+        console.log("GUN DETECTED")
+      }
       const label = labels[parseInt(prediction.class)]
       // Draw the bounding box.
       ctx.strokeStyle = '#00FFFF'
@@ -216,6 +227,7 @@ class VideoStream extends React.Component {
           width="600"
           height="500"
         />
+        asdf
       </div>
     )
   }
