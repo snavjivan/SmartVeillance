@@ -143,6 +143,7 @@ class VideoStream extends React.Component {
         message: 'NO GUN',
         channel: 'channel1'
       });
+      this.setState({text: 'NO GUN'})
     });
 
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -202,10 +203,13 @@ class VideoStream extends React.Component {
     if(predictions.length === 0) {
       if (this.gunDetected) {
         this.gunDetected = false
-        console.log("NO GUN")
+        this.pubnub.clean('channel1');
         this.pubnub.publish({
           message: 'NO GUN',
           channel: 'channel1'
+        });
+        this.pubnub.getMessage('channel1', (msg) => {
+          this.setState({text: msg.message})
         });
       }
     }
@@ -216,10 +220,13 @@ class VideoStream extends React.Component {
       const height = prediction.bbox[3]
       if (!this.gunDetected) {
         this.gunDetected = true
-        console.log("GUN DETECTED")
+        this.pubnub.clean('channel1');
         this.pubnub.publish({
-          message: 'GUN DETECTED',
+          message: 'GUN ON CAMERA 1',
           channel: 'channel1'
+        });
+        this.pubnub.getMessage('channel1', (msg) => {
+          this.setState({text: msg.message})
         });
       }
       const label = labels[parseInt(prediction.class)]
@@ -245,11 +252,10 @@ class VideoStream extends React.Component {
   }
 
   render() {
-    const messages = this.pubnub.getMessage('channel1');
     return (
       <div>
         <ul>
-          {messages.map((m, index) => <li key={'message' + index}>{m.message}</li>)}
+          {this.state.text}
         </ul>
         <video
           className="size"
