@@ -141,7 +141,7 @@ class VideoStream extends React.Component {
 
   componentDidMount() {
     this.pubnub.subscribe({
-      channels: ['channel1', 'channel2'],
+      channels: ['channel1', 'channel2', 'channel3'],
       withPresence: true
     });
     this.pubnub.getStatus((st) => {
@@ -192,7 +192,7 @@ class VideoStream extends React.Component {
 
   componentWillUnmount() {
     this.pubnub.unsubscribe({
-      channels: ['channel1', 'channel2']
+      channels: ['channel1', 'channel2', 'channel3']
     });
   }
 
@@ -253,10 +253,15 @@ class VideoStream extends React.Component {
       const y = prediction.bbox[1]
       const width = prediction.bbox[2]
       const height = prediction.bbox[3]
+      var tempDate = new Date();
       if (!this.gunDetected) {
         this.gunDetected = true
         this.alert();
         this.pubnub.clean('channel1');
+        this.pubnub.publish({
+          message: 'GUN ON CAMERA 1 at ' + tempDate.getHours()+':'+ tempDate.getMinutes(),
+          channel: 'channel3'
+        });
         this.pubnub.publish({
           message: 'GUN ON CAMERA 1',
           channel: 'channel1'
@@ -295,6 +300,7 @@ class VideoStream extends React.Component {
       height: 720,
       facingMode: "user"
     };
+    const messages = this.pubnub.getMessage('channel3', 4);
     return (
       <div>
         <div className="header">
@@ -333,6 +339,11 @@ class VideoStream extends React.Component {
   			   <source src={camera1} type="audio/mpeg" >
   			   </source>
   		  </audio>
+        <div className="history">
+          <ul>
+            {messages.map((m, index) => <li key={'message' + index}>{m.message}</li>)}
+          </ul>
+        </div>
       </div>
     )
   }
