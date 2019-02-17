@@ -1,4 +1,5 @@
 import React from 'react'
+import PubNubReact from 'pubnub-react';
 
 import * as tf from '@tensorflow/tfjs'
 import './styles.css'
@@ -123,7 +124,27 @@ class VideoStream extends React.Component {
   canvasRef = React.createRef()
   gunDetected = false
 
+  constructor(props) {
+    super(props);
+    this.pubnub = new PubNubReact({
+      publishKey: 'pub-c-dac98cd4-119f-47ad-b0ea-2f15a6d6b1bf',
+      subscribeKey: 'sub-c-59a63a04-3254-11e9-a629-42eced6f83cd'
+    });
+    this.pubnub.init(this);
+  }
+
   componentDidMount() {
+    this.pubnub.subscribe({
+      channels: ['channel1'],
+      withPresence: true
+    });
+    this.pubnub.getStatus((st) => {
+      this.pubnub.publish({
+        message: 'NO GUN',
+        channel: 'channel1'
+      });
+    });
+
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       const webCamPromise = navigator.mediaDevices
         .getUserMedia({
@@ -154,6 +175,12 @@ class VideoStream extends React.Component {
     }
   }
 
+  componentWillUnmount() {
+    this.pubnub.unsubscribe({
+      channels: ['channel1']
+    });
+  }
+
   detectFrame = (video, model, labels) => {
     TFWrapper(model)
       .detect(video)
@@ -176,6 +203,12 @@ class VideoStream extends React.Component {
       if (this.gunDetected) {
         this.gunDetected = false
         console.log("NO GUN")
+        this.pubnub.getStatus((st) => {
+          this.pubnub.publish({
+            message: 'NO GUN',
+            channel: 'channel1'
+          });
+        });
       }
     }
     predictions.forEach(prediction => {
@@ -186,6 +219,12 @@ class VideoStream extends React.Component {
       if (!this.gunDetected) {
         this.gunDetected = true
         console.log("GUN DETECTED")
+        this.pubnub.getStatus((st) => {
+          this.pubnub.publish({
+            message: 'GUN DETECTED',
+            channel: 'channel1'
+          });
+        });
       }
       const label = labels[parseInt(prediction.class)]
       // Draw the bounding box.
@@ -210,8 +249,12 @@ class VideoStream extends React.Component {
   }
 
   render() {
+    const messages = this.pubnub.getMessage('channel1');
     return (
       <div>
+        <ul>
+          {messages.map((m, index) => <li key={'message' + index}>{m.message}</li>)}
+        </ul>
         <video
           className="size"
           autoPlay
@@ -227,7 +270,6 @@ class VideoStream extends React.Component {
           width="600"
           height="500"
         />
-        asdf
       </div>
     )
   }
